@@ -21,7 +21,7 @@ const deliveryFees = {
   "Aruaru (centro)": 3,
   "Várzea da Jurema": 5
 };
-const categories = ["Pizzas Tradicionais", "Pizzas Premium", "Pizzas Doces", "Esfihas Salgadas", "Esfihas Doces", "Beirutes", "Calzones", "Bebidas"];
+const categories = ["Pizzas Tradicionais", "Pizzas Premium", "Pizzas Doces", "Esfihas Salgadas", "Esfihas Doces", "Salgado", "Beirutes", "Calzones", "Bebidas"];
 let cart = [];
 let activeCategory = categories[0];
 let ownerPeriod = "day";
