@@ -1,0 +1,32 @@
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[redirects]]
+  from = "/publico"
+  to = "/publico.html"
+  status = 200
+
+[[redirects]]
+  from = "/empresa"
+  to = "/empresa.html"
+  status = 200
+
+[[redirects]]
+  from = "/proprietario"
+  to = "/proprietario.html"
+  status = 200
+
+[[redirects]]
+  from = "/atendimento"
+  to = "/atendimento.html"
+  status = 200

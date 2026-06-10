@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Area da Empresa | Paulista Pizzaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="empresa">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="publico.html"><span class="brand-mark" aria-hidden="true"></span><span><strong>Paulista</strong><span>Area da empresa</span></span></a>
+      <nav class="nav">
+        <a href="publico.html">Publico</a>
+        <a href="atendimento.html">Balcao / mesas</a>
+        <a class="active" href="empresa.html">Empresa</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="tabs">
+      <button class="tab active" data-company-tab="orders">Pedidos</button>
+      <button class="tab" data-company-tab="menu">Cardapio</button>
+      <button class="tab" data-company-tab="links">Controle de links</button>
+    </div>
+    <section id="ordersTab">
+      <div class="section-title">
+        <h2>Pedidos</h2>
+        <span class="muted">Atualiza automaticamente a cada 10 segundos</span>
+      </div>
+      <div id="ordersList" class="orders"></div>
+    </section>
+    <section id="menuTab" class="hidden">
+      <div class="panel">
+        <h2>Novo produto</h2>
+        <form id="productForm" class="form-grid" style="margin-top:12px">
+          <input type="hidden" id="editProductId">
+          <label>Nome <input id="prodName" required></label>
+          <label>Categoria <select id="prodCategory"></select></label>
+          <label>Tamanho
+            <select id="prodSizeMode">
+              <option value="single">Preco unico</option>
+              <option value="pizza">Pizza M ou G</option>
+            </select>
+          </label>
+          <label id="singlePriceBox">Preco unico <input id="prodPrice" type="number" min="0" step="0.01"></label>
+          <label id="mediumPriceBox" class="hidden">Preco M <input id="prodPriceM" type="number" min="0" step="0.01" placeholder="Ex: 28,00"></label>
+          <label id="largePriceBox" class="hidden">Preco G <input id="prodPriceG" type="number" min="0" step="0.01" placeholder="Ex: 32,00"></label>
+          <label class="full">Descricao <textarea id="prodDesc"></textarea></label>
+          <label><input id="prodSoldOut" type="checkbox" style="width:auto;min-height:auto"> Esgotado</label>
+          <div class="actions full">
+            <button class="btn primary" type="submit">Salvar produto</button>
+            <button class="btn ghost" type="button" id="clearProductForm">Limpar</button>
+          </div>
+        </form>
+      </div>
+      <div id="menuManage"></div>
+    </section>
+    <section id="linksTab" class="hidden">
+      <div class="grid" id="linksGrid"></div>
+    </section>
+  </main>
+  <div id="printArea" class="hidden"></div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

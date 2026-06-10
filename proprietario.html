@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proprietario | Paulista Pizzaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="proprietario">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="publico.html"><span class="brand-mark" aria-hidden="true"></span><span><strong>Paulista</strong><span>Caixa do proprietario</span></span></a>
+      <nav class="nav">
+        <a href="publico.html">Publico</a>
+        <a href="empresa.html">Empresa</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="loginOwner" class="panel">
+      <h1 style="font-size:34px;color:#171717">Acesso do proprietario</h1>
+      <div class="form-grid" style="margin-top:12px">
+        <label>Senha
+          <input id="ownerPassword" type="password" placeholder="Digite a senha">
+        </label>
+        <div class="actions" style="align-items:end">
+          <button class="btn primary" id="ownerLogin">Entrar</button>
+        </div>
+      </div>
+    </section>
+    <section id="ownerDash" class="hidden">
+      <div class="section-title">
+        <h2>Movimentacao do caixa</h2>
+        <button class="btn ghost" id="ownerLogout">Sair</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-period="day">Dia</button>
+        <button class="tab" data-period="week">Semana</button>
+        <button class="tab" data-period="month">Mes</button>
+        <button class="tab" data-period="all">Tudo</button>
+      </div>
+      <div class="panel owner-filters">
+        <label>Pagamento
+          <select id="ownerPaymentFilter">
+            <option value="all">Todos</option>
+            <option value="Pix">Pix</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartao de credito">Cartao de credito</option>
+          </select>
+        </label>
+        <label>Origem
+          <select id="ownerOriginFilter"></select>
+        </label>
+        <label>Dia da semana
+          <select id="ownerWeekdayFilter">
+            <option value="all">Todos</option>
+            <option value="0">Domingo</option>
+            <option value="1">Segunda-feira</option>
+            <option value="2">Terca-feira</option>
+            <option value="3">Quarta-feira</option>
+            <option value="4">Quinta-feira</option>
+            <option value="5">Sexta-feira</option>
+            <option value="6">Sabado</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button class="btn ghost" id="ownerClearFilters">Limpar filtros</button>
+        </div>
+      </div>
+      <div id="metrics" class="dash"></div>
+      <div class="panel" style="margin-top:14px">
+        <h2>Pedidos no periodo</h2>
+        <div style="overflow:auto">
+          <table class="table" id="ownerTable"></table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

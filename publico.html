@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link Publico | Paulista Pizzaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="publico">
+  <div id="hoursBanner" class="closed-banner hidden"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="publico.html"><span class="brand-mark" aria-hidden="true"></span><span><strong>Paulista</strong><span>Pizzaria e Esfiharia</span></span></a>
+      <nav class="nav">
+        <a class="active" href="publico.html">Fazer pedido</a>
+      </nav>
+    </div>
+  </header>
+  <section class="hero">
+    <div class="wrap">
+      <h1>Paulista</h1>
+      <p class="lead">Escolha seus produtos, monte sua pizza, informe entrega ou retirada e finalize seu pedido.</p>
+    </div>
+  </section>
+  <main class="wrap layout">
+    <section>
+      <div class="tabs" id="categoryTabs"></div>
+      <div id="productSections"></div>
+    </section>
+    <aside class="panel cart">
+      <h2>Carrinho</h2>
+      <div id="cartList" class="cart-list"></div>
+      <div id="customerForm"></div>
+    </aside>
+  </main>
+  <dialog id="successDialog">
+    <div class="modal-body">
+      <h2>PEDIDO REALIZADO COM SUCESSO!</h2>
+      <p class="muted">A empresa recebeu seu pedido. Obrigado pela preferencia.</p>
+      <div id="successReceipt" class="success-receipt"></div>
+      <button class="btn primary" onclick="closeSuccess()">Fechar</button>
+    </div>
+  </dialog>
+  <dialog id="pizzaDialog">
+    <div class="modal-body">
+      <h2>Montar pizza</h2>
+      <p class="muted">Escolha ate 3 sabores. O valor sera o sabor de maior preco.</p>
+      <div class="form-grid" style="margin-top:12px">
+        <label>Tamanho
+          <select id="customPizzaSize" onchange="updateCustomPizzaTotal()">
+            <option value="media">Media</option>
+            <option value="grande" selected>Grande</option>
+          </select>
+        </label>
+        <label>Total
+          <input id="customPizzaTotal" readonly>
+        </label>
+      </div>
+      <div id="customPizzaFlavors" class="flavor-list"></div>
+      <div class="actions">
+        <button class="btn primary" onclick="confirmCustomPizza()">Adicionar pizza</button>
+        <button class="btn ghost" onclick="closeCustomPizza()">Cancelar</button>
+      </div>
+    </div>
+  </dialog>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

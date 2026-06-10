@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Balcao e Mesas | Paulista Pizzaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="atendimento">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="publico.html"><span class="brand-mark" aria-hidden="true"></span><span><strong>Paulista</strong><span>Balcao e mesas</span></span></a>
+      <nav class="nav">
+        <a href="publico.html">Link publico</a>
+        <a class="active" href="atendimento.html">Balcao / mesas</a>
+        <a href="empresa.html">Empresa</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap layout">
+    <section>
+      <div class="panel">
+        <h1 style="font-size:34px;color:#171717">Venda rapida</h1>
+        <div class="form-grid" style="margin-top:12px">
+          <label>Origem
+            <select id="saleOrigin"></select>
+          </label>
+          <label>Pagamento
+            <select id="counterPayment">
+              <option>Dinheiro</option>
+              <option>Pix</option>
+              <option>Cartao de credito</option>
+            </select>
+          </label>
+          <label class="full">Observacao
+            <textarea id="counterNote" placeholder="Ex: sem cebola, ponto da pizza, nome do cliente"></textarea>
+          </label>
+        </div>
+      </div>
+      <div class="tabs" id="categoryTabs"></div>
+      <div id="productSections"></div>
+    </section>
+    <aside class="panel cart">
+      <h2>Comanda atual</h2>
+      <div id="cartList" class="cart-list"></div>
+      <button class="btn primary" id="finishCounter">Finalizar venda</button>
+    </aside>
+  </main>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
