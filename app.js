@@ -699,6 +699,41 @@ function createOrder(extra) {
   return order;
 }
 
+function isTableSource(source) {
+  return /^Mesa\s+(10|[1-9])$/.test(String(source || ""));
+}
+
+function isOpenTableOrder(order) {
+  return isTableSource(order.source) && order.status === "Aberto";
+}
+
+function appendToTableOrder(source, payment, notes) {
+  const orders = getOrders();
+  const open = orders.find(order => order.source === source && order.status === "Aberto");
+  const newItems = cart.map(item => ({ ...item }));
+  const addedSubtotal = cartSubtotal();
+
+  if (!open) {
+    return createOrder({
+      source,
+      customer: { name: source, mode: "Mesa", fee: 0 },
+      payment,
+      notes,
+      status: "Aberto"
+    });
+  }
+
+  open.items = [...open.items, ...newItems];
+  open.subtotal = Number(open.subtotal || 0) + addedSubtotal;
+  open.total = Number(open.total || 0) + addedSubtotal;
+  open.payment = payment;
+  open.notes = [open.notes, notes].filter(Boolean).join(" | ");
+  open.printed = false;
+  saveOrders(orders);
+  persistOrderUpdate(open);
+  return open;
+}
+
 function initCounter() {
   const origin = document.getElementById("saleOrigin");
   if (origin) {
@@ -706,17 +741,24 @@ function initCounter() {
   }
   document.getElementById("finishCounter")?.addEventListener("click", () => {
     if (!cart.length) return toast("Adicione produtos na comanda");
-    createOrder({
-      source: origin.value,
-      customer: { name: origin.value, mode: "Local", fee: 0 },
-      payment: document.getElementById("counterPayment").value,
-      notes: document.getElementById("counterNote").value.trim()
-    });
+    const source = origin.value;
+    const payment = document.getElementById("counterPayment").value;
+    const notes = document.getElementById("counterNote").value.trim();
+    if (isTableSource(source)) {
+      appendToTableOrder(source, payment, notes);
+    } else {
+      createOrder({
+        source,
+        customer: { name: source, mode: "Local", fee: 0 },
+        payment,
+        notes
+      });
+    }
     cart = [];
     saveCart();
     document.getElementById("counterNote").value = "";
     renderCart();
-    toast("Venda enviada para a area da empresa");
+    toast(isTableSource(source) ? `Comanda da ${source} atualizada` : "Venda enviada para a area da empresa");
   });
 }
 
@@ -739,7 +781,7 @@ async function renderOrders() {
   await refreshOrdersFromSupabase();
   const orders = getOrders();
   el.innerHTML = orders.length ? orders.map(orderHtml).join("") : `<p class="muted">Nenhum pedido ainda.</p>`;
-  const firstNew = orders.find(o => !o.printed);
+  const firstNew = orders.find(o => !o.printed && !isOpenTableOrder(o));
   if (firstNew) printOrder(firstNew.id, true);
 }
 
@@ -747,11 +789,18 @@ function orderHtml(o) {
   const alert = o.payment === "Dinheiro" && o.changeFor ? `<span class="badge red">LEVAR TROCO ${money(o.changeFor)}</span>` :
     o.payment === "Cartao de credito" ? `<span class="badge red">LEVAR MAQUINETA</span>` : "";
   const phoneLink = whatsappLink(o.customer?.phone);
+  const openTable = isOpenTableOrder(o);
+  const statusBadge = openTable
+    ? `<span class="badge blue">ABERTO</span>`
+    : !o.printed ? `<span class="badge">NOVO</span>` : `<span class="badge green">Impresso</span>`;
+  const primaryAction = openTable
+    ? `<button class="btn primary" onclick="closeTableOrder('${o.id}')">Fechar comanda</button>`
+    : `<button class="btn primary" onclick="printOrder('${o.id}')">Imprimir comanda</button>`;
   return `
     <article class="card order">
       <div class="order-head">
         <div><strong>Pedido #${o.number}</strong><br><span class="muted">${new Date(o.createdAt).toLocaleString("pt-BR")} - ${o.source}</span></div>
-        <div class="actions">${!o.printed ? `<span class="badge">NOVO</span>` : `<span class="badge green">Impresso</span>`}${alert}</div>
+        <div class="actions">${statusBadge}${alert}</div>
       </div>
       <p><strong>${o.customer?.name || ""}</strong> ${phoneLink}</p>
       <p class="muted">${o.customer?.mode || ""} ${o.customer?.locality ? `- ${o.customer.locality}` : ""} ${o.customer?.address ? `- ${o.customer.address}` : ""}</p>
@@ -759,8 +808,8 @@ function orderHtml(o) {
       ${o.notes ? `<p><strong>Obs:</strong> ${o.notes}</p>` : ""}
       <div class="actions">
         <strong>Total ${money(o.total)}</strong>
-        <button class="btn primary" onclick="printOrder('${o.id}')">Imprimir comanda</button>
-        <button class="btn ghost" onclick="markDone('${o.id}')">Concluir</button>
+        ${primaryAction}
+        ${openTable ? `<button class="btn ghost" onclick="printOrder('${o.id}')">Imprimir parcial</button>` : `<button class="btn ghost" onclick="markDone('${o.id}')">Concluir</button>`}
       </div>
     </article>`;
 }
@@ -806,6 +855,17 @@ function printOrder(id, automatic = false) {
   persistOrderUpdate(order);
   setTimeout(() => window.print(), automatic ? 700 : 50);
   setTimeout(renderOrders, 900);
+}
+
+function closeTableOrder(id) {
+  const orders = getOrders();
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  order.status = "Fechado";
+  order.printed = false;
+  saveOrders(orders);
+  persistOrderUpdate(order);
+  printOrder(id);
 }
 
 function markDone(id) {

@@ -317,6 +317,7 @@ textarea { min-height: 78px; resize: vertical; }
 }
 .badge.red { background: var(--accent); color: #fff; }
 .badge.green { background: var(--ok); color: #fff; }
+.badge.blue { background: #2266aa; color: #fff; }
 .muted { color: var(--muted); }
 .money { font-variant-numeric: tabular-nums; }
 .dash {
