@@ -300,7 +300,7 @@ function needsInternalAuth() {
 }
 
 function isInternalAuthed() {
-  return sessionStorage.getItem(STORE.internal) === "1";
+  return localStorage.getItem(STORE.internal) === "1";
 }
 
 function showInternalLogin() {
@@ -325,7 +325,7 @@ function showInternalLogin() {
       toast("Senha incorreta");
       return;
     }
-    sessionStorage.setItem(STORE.internal, "1");
+    localStorage.setItem(STORE.internal, "1");
     document.getElementById("internalLogin")?.remove();
     document.body.classList.remove("auth-locked");
     bootstrapDataThenStart();
