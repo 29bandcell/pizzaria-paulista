@@ -796,6 +796,11 @@ function orderHtml(o) {
   const primaryAction = openTable
     ? `<button class="btn primary" onclick="closeTableOrder('${o.id}')">Fechar comanda</button>`
     : `<button class="btn primary" onclick="printOrder('${o.id}')">Imprimir comanda</button>`;
+  const itemsHtml = o.items.map(i => `
+    <li>
+      ${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""} - ${money(i.price * i.qty)}
+      ${openTable ? `<button class="btn ghost mini-btn" onclick="removeTableItem('${o.id}','${i.id}')">Excluir</button>` : ""}
+    </li>`).join("");
   return `
     <article class="card order">
       <div class="order-head">
@@ -804,7 +809,7 @@ function orderHtml(o) {
       </div>
       <p><strong>${o.customer?.name || ""}</strong> ${phoneLink}</p>
       <p class="muted">${o.customer?.mode || ""} ${o.customer?.locality ? `- ${o.customer.locality}` : ""} ${o.customer?.address ? `- ${o.customer.address}` : ""}</p>
-      <ul>${o.items.map(i => `<li>${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""} - ${money(i.price * i.qty)}</li>`).join("")}</ul>
+      <ul class="order-items">${itemsHtml}</ul>
       ${o.notes ? `<p><strong>Obs:</strong> ${o.notes}</p>` : ""}
       <div class="actions">
         <strong>Total ${money(o.total)}</strong>
@@ -812,6 +817,31 @@ function orderHtml(o) {
         ${openTable ? `<button class="btn ghost" onclick="printOrder('${o.id}')">Imprimir parcial</button>` : `<button class="btn ghost" onclick="markDone('${o.id}')">Concluir</button>`}
       </div>
     </article>`;
+}
+
+function removeTableItem(orderId, itemId) {
+  const orders = getOrders();
+  const order = orders.find(o => o.id === orderId);
+  if (!order || !isOpenTableOrder(order)) return;
+
+  const item = order.items.find(i => i.id === itemId);
+  if (!item) return;
+  if (!confirm(`Excluir ${item.name} da ${order.source}?`)) return;
+
+  const removedTotal = Number(item.price || 0) * Number(item.qty || 1);
+  order.items = order.items.filter(i => i.id !== itemId);
+  order.subtotal = Math.max(0, Number(order.subtotal || 0) - removedTotal);
+  order.total = Math.max(0, Number(order.total || 0) - removedTotal);
+  order.printed = false;
+
+  if (!order.items.length) {
+    order.status = "Cancelado";
+  }
+
+  saveOrders(orders);
+  persistOrderUpdate(order);
+  renderOrders();
+  toast("Produto removido da comanda");
 }
 
 function whatsappLink(phone) {
