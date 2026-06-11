@@ -2,12 +2,14 @@ const STORE = {
   products: "paulista_products_v1",
   orders: "paulista_orders_v1",
   cart: "paulista_cart_v1",
+  categories: "paulista_categories_v1",
   owner: "paulista_owner_ok_v1",
   internal: "paulista_internal_ok_v1"
 };
 const DB_TABLES = {
   products: "paulista_products",
-  orders: "paulista_orders"
+  orders: "paulista_orders",
+  categories: "paulista_categories"
 };
 const OWNER_PASSWORD = "Paulista@2026";
 const INTERNAL_PASSWORD = "Paulista@2026";
@@ -21,7 +23,8 @@ const deliveryFees = {
   "Aruaru (centro)": 3,
   "Várzea da Jurema": 5
 };
-const categories = ["Pizzas Tradicionais", "Pizzas Premium", "Pizzas Doces", "Esfihas Salgadas", "Esfihas Doces", "Salgado", "Beirutes", "Calzones", "Bebidas"];
+const DEFAULT_CATEGORIES = ["Pizzas Tradicionais", "Pizzas Premium", "Pizzas Doces", "Esfihas Salgadas", "Esfihas Doces", "Salgado", "Beirutes", "Calzones", "Bebidas"];
+let categories = loadLocalCategories();
 let cart = [];
 let activeCategory = categories[0];
 let ownerPeriod = "day";
@@ -130,6 +133,24 @@ function saveOrders(orders) { localStorage.setItem(STORE.orders, JSON.stringify(
 function loadCart() { cart = JSON.parse(localStorage.getItem(STORE.cart) || "[]"); }
 function saveCart() { localStorage.setItem(STORE.cart, JSON.stringify(cart)); }
 
+function loadLocalCategories() {
+  const saved = JSON.parse(localStorage.getItem(STORE.categories) || "[]");
+  return mergeCategories(saved);
+}
+
+function mergeCategories(extra = []) {
+  return [...new Set([...DEFAULT_CATEGORIES, ...extra.map(c => String(c || "").trim()).filter(Boolean)])];
+}
+
+function saveCategories(list) {
+  categories = mergeCategories(list);
+  localStorage.setItem(STORE.categories, JSON.stringify(categories));
+}
+
+function categoriesWithProducts() {
+  return mergeCategories([...categories, ...getProducts().map(product => product.category)]);
+}
+
 async function initSupabase() {
   const browserClient = window.supabase?.createClient;
   if (!browserClient) return false;
@@ -229,6 +250,7 @@ async function loadSupabaseData() {
   if (!supabaseReady) return;
   remoteSyncing = true;
   try {
+    await loadRemoteCategories();
     const productsResult = await supabaseClient.from(DB_TABLES.products).select("*").order("category").order("name");
     if (!productsResult.error && productsResult.data?.length) {
       const remoteProducts = productsResult.data.map(rowToProduct).filter(isPaulistaProduct);
@@ -254,6 +276,16 @@ async function loadSupabaseData() {
   }
 }
 
+async function loadRemoteCategories() {
+  if (!supabaseReady) return;
+  const result = await supabaseClient.from(DB_TABLES.categories).select("*").order("display_order").order("name");
+  if (!result.error && result.data?.length) {
+    saveCategories(result.data.map(row => row.name));
+  } else if (!result.error) {
+    await persistCategories(categories);
+  }
+}
+
 async function refreshOrdersFromSupabase() {
   if (!supabaseReady) return;
   const result = await supabaseClient.from(DB_TABLES.orders).select("*").order("created_at", { ascending: false });
@@ -268,6 +300,12 @@ async function persistProducts(products) {
 async function deleteRemoteProduct(id) {
   if (!supabaseReady) return;
   await supabaseClient.from(DB_TABLES.products).delete().eq("id", id);
+}
+
+async function persistCategories(list) {
+  if (!supabaseReady) return;
+  const rows = mergeCategories(list).map((name, index) => ({ name, display_order: (index + 1) * 10 }));
+  await supabaseClient.from(DB_TABLES.categories).upsert(rows, { onConflict: "name" });
 }
 
 async function persistOrder(order) {
@@ -486,10 +524,12 @@ function closeCustomPizza() {
 
 function renderMenu() {
   const products = getProducts();
+  const visibleCategories = categoriesWithProducts();
   const tabs = document.getElementById("categoryTabs");
   const sections = document.getElementById("productSections");
   if (!tabs || !sections) return;
-  tabs.innerHTML = categories.map(cat => `<button class="tab ${cat === activeCategory ? "active" : ""}" data-cat="${cat}">${cat}</button>`).join("");
+  if (!visibleCategories.includes(activeCategory)) activeCategory = visibleCategories[0];
+  tabs.innerHTML = visibleCategories.map(cat => `<button class="tab ${cat === activeCategory ? "active" : ""}" data-cat="${cat}">${cat}</button>`).join("");
   tabs.querySelectorAll("[data-cat]").forEach(btn => btn.onclick = () => {
     activeCategory = btn.dataset.cat;
     renderMenu();
@@ -770,9 +810,44 @@ function initCompany() {
     if (btn.dataset.companyTab === "menu") renderManageMenu();
     if (btn.dataset.companyTab === "links") renderLinks();
   });
+  setupCategoryForm();
   setupProductForm();
   renderOrders();
   setInterval(renderOrders, 10000);
+}
+
+function setupCategoryForm() {
+  const form = document.getElementById("categoryForm");
+  if (!form) return;
+  renderCategoryManage();
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    const input = document.getElementById("newCategoryName");
+    const name = input.value.trim();
+    if (!name) return toast("Informe o nome da categoria");
+    if (categoriesWithProducts().some(cat => cat.toLowerCase() === name.toLowerCase())) {
+      input.value = "";
+      return toast("Categoria ja existe");
+    }
+    saveCategories([...categories, name]);
+    persistCategories(categories);
+    input.value = "";
+    setupProductCategoryOptions();
+    renderCategoryManage();
+    renderManageMenu();
+    toast("Categoria adicionada");
+  });
+}
+
+function setupProductCategoryOptions() {
+  const category = document.getElementById("prodCategory");
+  if (category) category.innerHTML = categoriesWithProducts().map(c => `<option>${c}</option>`).join("");
+}
+
+function renderCategoryManage() {
+  const el = document.getElementById("categoryManage");
+  if (!el) return;
+  el.innerHTML = categoriesWithProducts().map(cat => `<span class="badge">${escapeHtml(cat)}</span>`).join("");
 }
 
 async function renderOrders() {
@@ -856,17 +931,18 @@ function receiptHtml(o) {
   return `
     <div class="receipt">
       <h2>PAULISTA PIZZARIA</h2>
-      <p>Pedido #${o.number}<br>${new Date(o.createdAt).toLocaleString("pt-BR")}<br>${o.source}</p>
+      <p><strong>Pedido #${o.number}</strong><br>${new Date(o.createdAt).toLocaleString("pt-BR")}<br>${o.source}</p>
       <hr>
       <p>${o.customer?.name || ""}<br>${o.customer?.phone || ""}<br>${o.customer?.mode || ""} ${o.customer?.locality || ""}<br>${o.customer?.address || ""}</p>
       <hr>
-      ${o.items.map(i => `<p>${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}<br>${i.desc || ""}<br>${money(i.price * i.qty)}</p>`).join("")}
+      ${o.items.map(i => `<p class="receipt-item"><strong>${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}</strong><br>${money(i.price * i.qty)}</p>`).join("")}
       <hr>
       ${o.customer?.fee ? `<p>Entrega: ${money(o.customer.fee)}</p>` : ""}
       <p><strong>Total: ${money(o.total)}</strong></p>
       <p>Pagamento: ${o.payment}</p>
       ${warning}
       ${o.notes ? `<p>Obs: ${o.notes}</p>` : ""}
+      <div class="receipt-end"></div>
     </div>`;
 }
 
@@ -908,8 +984,7 @@ function markDone(id) {
 }
 
 function setupProductForm() {
-  const category = document.getElementById("prodCategory");
-  if (category) category.innerHTML = categories.map(c => `<option>${c}</option>`).join("");
+  setupProductCategoryOptions();
   document.getElementById("prodSizeMode")?.addEventListener("change", updateProductPriceFields);
   updateProductPriceFields();
   document.getElementById("clearProductForm")?.addEventListener("click", clearProductForm);
@@ -962,7 +1037,7 @@ function renderManageMenu() {
   const el = document.getElementById("menuManage");
   if (!el) return;
   const products = getProducts();
-  el.innerHTML = categories.map(cat => `
+  el.innerHTML = categoriesWithProducts().map(cat => `
     <div class="section-title"><h2>${cat}</h2></div>
     <div class="grid">${products.filter(p => p.category === cat).map(p => `
       <article class="card product ${p.soldOut ? "sold-out" : ""}">

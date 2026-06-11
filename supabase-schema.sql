@@ -28,14 +28,23 @@ create table if not exists public.paulista_orders (
   status text not null default 'Novo'
 );
 
+create table if not exists public.paulista_categories (
+  name text primary key,
+  display_order integer not null default 999,
+  created_at timestamptz not null default now()
+);
+
 alter table public.paulista_products enable row level security;
 alter table public.paulista_orders enable row level security;
+alter table public.paulista_categories enable row level security;
 
 drop policy if exists "paulista products read" on public.paulista_products;
 drop policy if exists "paulista products write" on public.paulista_products;
 drop policy if exists "paulista orders read" on public.paulista_orders;
 drop policy if exists "paulista orders insert" on public.paulista_orders;
 drop policy if exists "paulista orders update" on public.paulista_orders;
+drop policy if exists "paulista categories read" on public.paulista_categories;
+drop policy if exists "paulista categories write" on public.paulista_categories;
 
 create policy "paulista products read"
 on public.paulista_products for select
@@ -60,6 +69,17 @@ with check (true);
 
 create policy "paulista orders update"
 on public.paulista_orders for update
+to anon
+using (true)
+with check (true);
+
+create policy "paulista categories read"
+on public.paulista_categories for select
+to anon
+using (true);
+
+create policy "paulista categories write"
+on public.paulista_categories for all
 to anon
 using (true)
 with check (true);
