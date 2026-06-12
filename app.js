@@ -26,6 +26,7 @@ const deliveryFees = {
 const DEFAULT_CATEGORIES = ["Pizzas Tradicionais", "Pizzas Premium", "Pizzas Doces", "Esfihas Salgadas", "Esfihas Doces", "Salgado", "Beirutes", "Calzones", "Bebidas"];
 let categories = loadLocalCategories();
 let cart = [];
+let currentCartKey = STORE.cart;
 let activeCategory = categories[0];
 let ownerPeriod = "day";
 let ownerFilters = { payment: "all", origin: "all", weekday: "all" };
@@ -130,8 +131,18 @@ function saveProducts(products) {
 }
 function getOrders() { return JSON.parse(localStorage.getItem(STORE.orders) || "[]"); }
 function saveOrders(orders) { localStorage.setItem(STORE.orders, JSON.stringify(orders)); }
-function loadCart() { cart = JSON.parse(localStorage.getItem(STORE.cart) || "[]"); }
-function saveCart() { localStorage.setItem(STORE.cart, JSON.stringify(cart)); }
+function cartStorageKey() {
+  if (page === "atendimento") {
+    const origin = document.getElementById("saleOrigin")?.value || "Balcao";
+    return `${STORE.cart}:${origin}`;
+  }
+  return STORE.cart;
+}
+function loadCart() {
+  currentCartKey = cartStorageKey();
+  cart = JSON.parse(localStorage.getItem(currentCartKey) || "[]");
+}
+function saveCart() { localStorage.setItem(currentCartKey || cartStorageKey(), JSON.stringify(cart)); }
 
 function loadLocalCategories() {
   const saved = JSON.parse(localStorage.getItem(STORE.categories) || "[]");
@@ -790,6 +801,12 @@ function initCounter() {
   const origin = document.getElementById("saleOrigin");
   if (origin) {
     origin.innerHTML = [`Balcao`, ...Array.from({ length: 10 }, (_, i) => `Mesa ${i + 1}`)].map(x => `<option>${x}</option>`).join("");
+    loadCart();
+    origin.addEventListener("change", () => {
+      saveCart();
+      loadCart();
+      renderCart();
+    });
   }
   document.getElementById("finishCounter")?.addEventListener("click", () => {
     if (!cart.length) return toast("Adicione produtos na comanda");
@@ -1237,11 +1254,11 @@ async function bootstrapDataThenStart() {
 }
 
 function startAppAfterAuth() {
+  if (page === "atendimento") initCounter();
   if (page === "publico" || page === "atendimento") {
     renderMenu();
     renderCart();
   }
-  if (page === "atendimento") initCounter();
   if (page === "empresa") initCompany();
   if (page === "proprietario") initOwner();
 }
