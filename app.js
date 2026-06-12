@@ -176,9 +176,6 @@ function productToRow(product) {
     category: product.category,
     description: product.desc || "",
     price: product.price || 0,
-    stock: 9999,
-    type: "product",
-    active: !product.soldOut,
     sizes: product.sizes || null,
     is_pizza: !!product.isPizza,
     sold_out: !!product.soldOut
@@ -294,7 +291,11 @@ async function refreshOrdersFromSupabase() {
 
 async function persistProducts(products) {
   if (!supabaseReady) return;
-  await supabaseClient.from(DB_TABLES.products).upsert(products.map(productToRow), { onConflict: "id" });
+  const result = await supabaseClient.from(DB_TABLES.products).upsert(products.map(productToRow), { onConflict: "id" });
+  if (result.error) {
+    console.error("Erro ao salvar produto no Supabase:", result.error);
+    toast("Erro ao salvar no Supabase. Tente novamente.");
+  }
 }
 
 async function deleteRemoteProduct(id) {
