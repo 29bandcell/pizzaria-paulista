@@ -298,6 +298,17 @@ async function persistProducts(products) {
   }
 }
 
+async function persistProduct(product) {
+  if (!supabaseReady) return false;
+  const result = await supabaseClient.from(DB_TABLES.products).upsert(productToRow(product), { onConflict: "id" });
+  if (result.error) {
+    console.error("Erro ao salvar produto no Supabase:", result.error);
+    toast("Erro ao salvar no Supabase. Tente novamente.");
+    return false;
+  }
+  return true;
+}
+
 async function deleteRemoteProduct(id) {
   if (!supabaseReady) return;
   await supabaseClient.from(DB_TABLES.products).delete().eq("id", id);
@@ -1013,8 +1024,11 @@ function setupProductForm() {
       const idx = products.findIndex(p => p.id === id);
       products[idx] = data;
     } else products.unshift(data);
-    saveProducts(products);
+    localStorage.setItem(STORE.products, JSON.stringify(products));
+    persistProduct(data);
     clearProductForm();
+    setupProductCategoryOptions();
+    renderMenu();
     renderManageMenu();
     toast("Produto salvo");
   });
