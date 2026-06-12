@@ -253,7 +253,7 @@ async function loadSupabaseData() {
     await loadRemoteCategories();
     const productsResult = await supabaseClient.from(DB_TABLES.products).select("*").order("category").order("name");
     if (!productsResult.error && productsResult.data?.length) {
-      const remoteProducts = productsResult.data.map(rowToProduct).filter(isPaulistaProduct);
+      const remoteProducts = productsResult.data.map(rowToProduct);
       if (remoteProducts.length) {
         localStorage.setItem(STORE.products, JSON.stringify(remoteProducts));
       } else {
@@ -265,7 +265,7 @@ async function loadSupabaseData() {
       await persistProducts(defaults);
     } else {
       const localProducts = getProducts();
-      if (!localProducts.some(isPaulistaProduct)) resetLocalDefaultProducts();
+      if (!localProducts.length) resetLocalDefaultProducts();
     }
 
     await refreshOrdersFromSupabase();
